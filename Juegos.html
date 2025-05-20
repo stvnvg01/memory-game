@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Juego de Memoria - Verbos en Inglés</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f0f0f0;
+    }
+
+    h1 {
+      margin-top: 20px;
+    }
+
+    #controls {
+      margin: 15px;
+    }
+
+    #game-board {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+      justify-content: center;
+      margin: 20px auto;
+      max-width: 440px;
+    }
+
+    .card {
+      width: 100px;
+      height: 100px;
+      background-color: #1922d5;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      border-radius: 10px;
+      user-select: none;
+      transition: background-color 0.3s;
+    }
+
+    .card.revealed {
+      background-color: #ffffff;
+      color: #333;
+    }
+
+    .card.matched {
+      background-color: #616897;
+      color: white;
+      cursor: default;
+    }
+
+    #restart-btn {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 10px;
+      cursor: pointer;
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    #restart-btn:hover {
+      background-color: #1976D2;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎯 Juego de Memoria: Verbos en Inglés</h1>
+
+  <div id="controls">
+    <label for="level">Dificultad:</label>
+    <select id="level" onchange="startGame()">
+      <option value="4">Fácil (4 pares)</option>
+      <option value="6">Medio (6 pares)</option>
+      <option value="8" selected>Difícil (8 pares)</option>
+    </select>
+    <br>
+    <button id="restart-btn" onclick="startGame()">Reiniciar</button>
+  </div>
+
+  <div id="game-board"></div>
+
+  <script>
+    const actions = ['run', 'jump', 'swim', 'read', 'write', 'eat', 'sleep', 'dance', 'climb', 'cook', 'drive', 'play'];
+    let board = [];
+    let firstCard = null;
+    let lock = false;
+
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function startGame() {
+      const level = parseInt(document.getElementById("level").value); // # de pares
+      const selectedWords = shuffle(actions).slice(0, level);
+      const doubled = [...selectedWords, ...selectedWords];
+      board = shuffle(doubled);
+      firstCard = null;
+      lock = false;
+
+      const gameBoard = document.getElementById("game-board");
+      gameBoard.innerHTML = "";
+
+      board.forEach((word, index) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.dataset.word = word;
+        card.dataset.index = index;
+        card.onclick = () => revealCard(card);
+        gameBoard.appendChild(card);
+      });
+    }
+
+    function revealCard(card) {
+      if (lock || card.classList.contains("matched") || card.classList.contains("revealed")) return;
+
+      card.classList.add("revealed");
+      card.textContent = card.dataset.word;
+
+      if (!firstCard) {
+        firstCard = card;
+      } else {
+        lock = true;
+        if (card.dataset.word === firstCard.dataset.word) {
+          card.classList.add("matched");
+          firstCard.classList.add("matched");
+
+          setTimeout(() => {
+            card.classList.remove("revealed");
+            firstCard.classList.remove("revealed");
+            card.textContent = "";
+            firstCard.textContent = "";
+            lock = false;
+            firstCard = null;
+            checkWin();
+          }, 500);
+        } else {
+          setTimeout(() => {
+            card.classList.remove("revealed");
+            firstCard.classList.remove("revealed");
+            card.textContent = "";
+            firstCard.textContent = "";
+            firstCard = null;
+            lock = false;
+          }, 1000);
+        }
+      }
+    }
+
+    function checkWin() {
+      const matched = document.querySelectorAll('.card.matched');
+      if (matched.length === board.length) {
+        setTimeout(() => {
+          alert("¡Bien hecho! Has emparejado todos los verbos.");
+        }, 300);
+      }
+    }
+
+    startGame();
+  </script>
+
+</body>
+</html>
