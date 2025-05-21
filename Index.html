@@ -1,0 +1,224 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Memory Game - Programming Expressions🧠</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-image: url('Resources/English_Background2.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      margin-top: 20px;
+      color: #fff;
+      text-shadow: 2px 2px 4px #000;
+    }
+    #controls {
+      background-color: rgba(255, 255, 255, 0.85);
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 10px;
+      margin: 10px auto;
+    }
+    #controls label {
+      font-size: 18px;
+      color: #333;
+    }
+    #controls select {
+      background-color: #f5efef;
+      padding: 5px;
+      font-size: 16px;
+      margin-left: 10px;
+      border-radius: 10px;
+    }
+    #game-board {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+      justify-content: center;
+      margin: 20px auto;
+      max-width: 500px;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 15px;
+      border-radius: 10px;
+    }
+    .card {
+      width: 100px;
+      height: 100px;
+      background-color: #4c4caf;
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 5px;
+      cursor: pointer;
+      border-radius: 10px;
+      user-select: none;
+      transition: background-color 0.3s;
+    }
+    .card.revealed {
+      background-color: #c4d5d6;
+      color: #333;
+    }
+    .card.matched {
+      background-color: #9394a6;
+      color: white;
+      cursor: default;
+    }
+    #restart-btn {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 10px;
+      cursor: pointer;
+      background-color: #4c4caf;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    #restart-btn:hover {
+      background-color: #1976D2;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Memory Game - Programming Expressions🧠</h1>
+
+  <div id="controls">
+    <label for="level">Dificultad:</label>
+    <select id="level" onchange="startGame()">
+      <option value="4">Fácil (4 pares)</option>
+      <option value="6">Medio (6 pares)</option>
+      <option value="8" selected>Difícil (8 pares)</option>
+    </select>
+    <br>
+    <button id="restart-btn" onclick="startGame()">Reiniciar</button>
+  </div>
+
+  <div id="game-board"></div>
+
+  <script>
+    const programmingExpressions = [
+      { display: "for loop 🔁",      speech: "for loop" },
+      { display: "if else 🔀",       speech: "if else" },
+      { display: "while loop 🔄",    speech: "while loop" },
+      { display: "try catch ⚠️",     speech: "try catch" },
+      { display: "console.log 🖨️",  speech: "console log" },
+      { display: "function() 🔧",    speech: "function" },
+      { display: "return value ⬅️",  speech: "return value" },
+      { display: "null check ❓",     speech: "null check" },
+      { display: "array.push ➕",     speech: "array push" },
+      { display: "object.key 🔑",    speech: "object key" },
+      { display: "event listener 🎧", speech: "event listener" },
+      { display: "querySelector 🔍", speech: "query selector" },
+      { display: "async await ⏳",    speech: "async await" },
+      { display: "promise.then 🤝",  speech: "promise then" },
+      { display: "JSON.parse 📦",    speech: "JSON parse" },
+      { display: "class extends 🧱",  speech: "class extends" }
+    ];
+
+    let board = [];
+    let firstCard = null;
+    let lock = false;
+
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function startGame() {
+      // Genera el tablero
+      const level = +document.getElementById("level").value;
+      const selected = shuffle(programmingExpressions).slice(0, level);
+      board = shuffle([...selected, ...selected]);
+      firstCard = null;
+      lock = true;  // bloquea clics durante la previsualización
+
+      const gameBoard = document.getElementById("game-board");
+      gameBoard.innerHTML = "";
+
+      // Crea las cartas sin mostrarlas aún
+      board.forEach(expr => {
+        const card = document.createElement("div");
+        card.className       = "card";
+        card.dataset.display = expr.display;
+        card.dataset.speech  = expr.speech;
+        card.onclick         = () => revealCard(card);
+        gameBoard.appendChild(card);
+      });
+
+      // 1) Muestra todas las cartas
+      document.querySelectorAll(".card").forEach(c => {
+        c.classList.add("revealed");
+        c.textContent = c.dataset.display;
+      });
+
+      // 2) Tras 5 segundos, oculta todo y desbloquea el juego
+      setTimeout(() => {
+        document.querySelectorAll(".card").forEach(c => {
+          c.classList.remove("revealed");
+          c.textContent = "";
+        });
+        lock = false;
+      }, 5000);
+    }
+
+    function revealCard(card) {
+      if (lock || card.classList.contains("matched") || card.classList.contains("revealed")) return;
+
+      card.classList.add("revealed");
+      card.textContent = card.dataset.display;
+      speak(card.dataset.speech);
+
+      if (!firstCard) {
+        firstCard = card;
+      } else {
+        lock = true;
+        if (card.dataset.speech === firstCard.dataset.speech) {
+          card.classList.add("matched");
+          firstCard.classList.add("matched");
+          setTimeout(resetPair, 2500, card, firstCard, true);
+        } else {
+          setTimeout(resetPair, 1000, card, firstCard, false);
+        }
+      }
+    }
+
+    function resetPair(cardA, cardB, matched) {
+      if (!matched) {
+        cardA.classList.remove("revealed");
+        cardB.classList.remove("revealed");
+      }
+      cardA.textContent = matched ? "" : "";
+      cardB.textContent = matched ? "" : "";
+      firstCard = null;
+      lock = false;
+      if (matched) checkWin();
+    }
+
+    function checkWin() {
+      if (document.querySelectorAll(".card.matched").length === board.length) {
+        setTimeout(() => alert("🎉 ¡Felicidades! Has emparejado todas las expresiones."), 300);
+      }
+    }
+
+    function speak(text) {
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "en-US";
+      speechSynthesis.speak(u);
+    }
+
+    // Arranca el juego al cargar la página
+    startGame();
+  </script>
+
+</body>
+</html>
